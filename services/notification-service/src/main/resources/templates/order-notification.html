@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Order Notification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #2196f3, #0d47a1);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px;
+            color: #333;
+        }
+        .order-summary {
+            background-color: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .order-status {
+            text-align: center;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status-pending {
+            background-color: #fff3e0;
+            color: #ef6c00;
+        }
+        .status-shipped {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        .status-delivered {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+        .status-cancelled {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        .action-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #2196f3;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Order Notification</h1>
+        </div>
+        <div class="content">
+            <p>Dear <span th:text="${customerName}">Customer</span>,</p>
+            
+            <p>Your order <strong th:text="${'#' + orderNumber}">#ORDER_NUMBER</strong> has been updated.</p>
+            
+            <div th:class="'order-status status-' + ${orderStatus.toLowerCase()}">
+                <span th:text="${orderStatus}">STATUS</span>
+            </div>
+            
+            <div class="order-summary">
+                <h3>Order Details</h3>
+                <p><strong>Order Number:</strong> <span th:text="${orderNumber}">ORDER_NUMBER</span></p>
+                <p><strong>Order Date:</strong> <span th:text="${#temporals.format(orderDate, 'dd MMM yyyy HH:mm')}">DATE</span></p>
+                <p><strong>Total Amount:</strong> $<span th:text="${#numbers.formatDecimal(totalAmount, 0, 2)}">AMOUNT</span></p>
+                
+                <h4>Items:</h4>
+                <div th:each="item : ${orderItems}" class="order-item">
+                    <span th:text="${item.productName}">Product Name</span>
+                    <span th:text="${item.quantity} + ' x $' + ${#numbers.formatDecimal(item.price, 0, 2)}">QTY x PRICE</span>
+                </div>
+            </div>
+            
+            <p th:if="${message}" th:text="${message}">Additional message</p>
+            
+            <div th:if="${actionUrl}">
+                <a th:href="${actionUrl}" class="action-button" th:text="${actionText} ?: 'View Order'">View Order</a>
+            </div>
+            
+            <p>Thank you for choosing Agricultural Digital Platform!</p>
+        </div>
+        <div class="footer">
+            <p>This email was sent by Agricultural Digital Platform</p>
+            <p>Order ID: <span th:text="${orderNumber}">ORDER_NUMBER</span></p>
+        </div>
+    </div>
+</body>
+</html>

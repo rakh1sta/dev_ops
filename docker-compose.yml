@@ -1,0 +1,480 @@
+version: '3.8'
+
+services:
+  # Discovery Server (Eureka)
+  discovery-server:
+    image: YOUR_DOCKERHUB_USERNAME/discovery-server:latest
+    container_name: discovery-server
+    hostname: discovery-server
+    ports:
+      - "8761:8761"
+    networks:
+      - agricultural-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8761
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - EUREKA_CLIENT_REGISTER_WITH_EUREKA=false
+      - EUREKA_CLIENT_FETCH_REGISTRY=false
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # API Gateway
+  api-gateway:
+    image: YOUR_DOCKERHUB_USERNAME/api-gateway:latest
+    container_name: api-gateway
+    hostname: api-gateway
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    networks:
+      - agricultural-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8080
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - JAVA_OPTS=-Xmx256m -Xms128m
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_ID=users-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=lb://users-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0=Path=/api/auth/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_1=Path=/api/users/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_2=Path=/api/profile/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_ID=product-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=lb://product-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0=Path=/api/products/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_1=Path=/api/categories/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_2=Path=/api/inventory/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_2_ID=order-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_2_URI=lb://order-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_2_PREDICATES_0=Path=/api/orders/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_2_PREDICATES_1=Path=/api/transactions/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_2_PREDICATES_2=Path=/api/procurement/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_3_ID=notification-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_3_URI=lb://notification-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_3_PREDICATES_0=Path=/api/notifications/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_3_PREDICATES_1=Path=/api/alerts/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_4_ID=statistics-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_4_URI=lb://statistics-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_4_PREDICATES_0=Path=/api/statistics/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_4_PREDICATES_1=Path=/api/reports/**
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  # Users Service
+  users-service:
+    image: YOUR_DOCKERHUB_USERNAME/users-service:latest
+    container_name: users-service
+    hostname: users-service
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres-users:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    networks:
+      - agricultural-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8081
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - JAVA_OPTS=-Xmx256m -Xms128m
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-users:5432/agricultural_users_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  # Product Service
+  product-service:
+    image: YOUR_DOCKERHUB_USERNAME/product-service:latest
+    container_name: product-service
+    hostname: product-service
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres-product:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+    networks:
+      - agricultural-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8082
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - JAVA_OPTS=-Xmx256m -Xms128m
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-product:5432/agricultural_product_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  # Order Service
+  order-service:
+    image: YOUR_DOCKERHUB_USERNAME/order-service:latest
+    container_name: order-service
+    hostname: order-service
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres-order:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "8083:8083"
+    networks:
+      - agricultural-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8083
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - JAVA_OPTS=-Xmx256m -Xms128m
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-order:5432/agricultural_order_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  # Notification Service
+  notification-service:
+    image: YOUR_DOCKERHUB_USERNAME/notification-service:latest
+    container_name: notification-service
+    hostname: notification-service
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "8084:8084"
+    networks:
+      - agricultural-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8084
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - JAVA_OPTS=-Xmx256m -Xms128m
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  # Statistics Service
+  statistics-service:
+    image: YOUR_DOCKERHUB_USERNAME/statistics-service:latest
+    container_name: statistics-service
+    hostname: statistics-service
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres-statistics:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8085:8085"
+    networks:
+      - agricultural-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8085
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - JAVA_OPTS=-Xmx256m -Xms128m
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-statistics:5432/agricultural_statistics_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  # PostgreSQL for Users Service
+  postgres-users:
+    image: postgres:15
+    container_name: postgres-users
+    hostname: postgres-users
+    environment:
+      POSTGRES_DB: agricultural_users_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    networks:
+      - agricultural-network
+    volumes:
+      - postgres_users_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d agricultural_users_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    ports:
+      - "5433:5432"
+
+  # PostgreSQL for Product Service
+  postgres-product:
+    image: postgres:15
+    container_name: postgres-product
+    hostname: postgres-product
+    environment:
+      POSTGRES_DB: agricultural_product_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    networks:
+      - agricultural-network
+    volumes:
+      - postgres_product_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d agricultural_product_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # PostgreSQL for Order Service
+  postgres-order:
+    image: postgres:15
+    container_name: postgres-order
+    hostname: postgres-order
+    environment:
+      POSTGRES_DB: agricultural_order_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    networks:
+      - agricultural-network
+    volumes:
+      - postgres_order_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d agricultural_order_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # PostgreSQL for Statistics Service
+  postgres-statistics:
+    image: postgres:15
+    container_name: postgres-statistics
+    hostname: postgres-statistics
+    environment:
+      POSTGRES_DB: agricultural_statistics_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    networks:
+      - agricultural-network
+    volumes:
+      - postgres_statistics_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d agricultural_statistics_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - agricultural-network
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Redis for caching (used by Statistics Service)
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    hostname: redis
+    networks:
+      - agricultural-network
+    volumes:
+      - redis_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    ports:
+      - "6379:6379"
+
+networks:
+  agricultural-network:
+    driver: bridge
+
+volumes:
+  postgres_users_data:
+  postgres_product_data:
+  postgres_order_data:
+  postgres_statistics_data:
+  rabbitmq_data:
+  redis_data:

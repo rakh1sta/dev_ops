@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Price Change Alert</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px;
+            color: #333;
+        }
+        .product-card {
+            background-color: #fff3e0;
+            border: 1px solid #ffe0b2;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .price-change {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .old-price {
+            text-decoration: line-through;
+            color: #f44336;
+            font-size: 18px;
+        }
+        .new-price {
+            color: #4caf50;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .change-percentage {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .positive {
+            background-color: #e8f5e9;
+            color: #4caf50;
+        }
+        .negative {
+            background-color: #ffebee;
+            color: #f44336;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Price Change Alert</h1>
+        </div>
+        <div class="content">
+            <p>Dear <span th:text="${userName}">Valued Customer</span>,</p>
+            
+            <p>We wanted to inform you about a price change for a product you might be interested in:</p>
+            
+            <div class="product-card">
+                <h3 th:text="${productName}">Product Name</h3>
+                <p th:text="${productDescription}">Product Description</p>
+                
+                <div class="price-change">
+                    <div class="old-price" th:text="'$' + ${#numbers.formatDecimal(oldPrice, 0, 2)}">$XX.XX</div>
+                    <div class="new-price" th:text="'$' + ${#numbers.formatDecimal(newPrice, 0, 2)}">$XX.XX</div>
+                    
+                    <div th:classappend="${changePercentage >= 0 ? 'positive' : 'negative'}" 
+                         class="change-percentage" 
+                         th:text="${changePercentage >= 0 ? '+' : ''} + ${#numbers.formatDecimal(changePercentage, 0, 2)} + '%'">
+                        +X.XX%
+                    </div>
+                </div>
+                
+                <p>Change occurred on: <span th:text="${changeDate}">Date</span></p>
+            </div>
+            
+            <p>If you have any questions or would like to place an order, please visit our platform.</p>
+            
+            <p>Best regards,<br/>Agricultural Digital Platform Team</p>
+        </div>
+        <div class="footer">
+            <p>This email was sent by Agricultural Digital Platform</p>
+            <p>You received this email because you subscribed to price alerts.</p>
+        </div>
+    </div>
+</body>
+</html>
