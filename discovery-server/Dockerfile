@@ -6,13 +6,14 @@ FROM maven:3.9.6-eclipse-temurin-17-alpine AS builder
 
 WORKDIR /app
 
-# Copy the entire project structure to resolve parent POM and dependencies
+# Copy the parent pom.xml first for layer caching
 COPY pom.xml .
-COPY settings.gradle .
-COPY build.gradle .
-COPY api-gateway/ ./api-gateway/
-COPY discovery-server/ ./discovery-server/
-COPY services/ ./services/
+
+# Install parent POM to local repository
+RUN mvn install -N
+
+# Copy the rest of the project
+COPY . .
 
 # Build only the discovery-server module and its dependencies
 RUN mvn clean package -pl "discovery-server" -am -DskipTests -B -q
