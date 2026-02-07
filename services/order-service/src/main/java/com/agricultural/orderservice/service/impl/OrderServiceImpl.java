@@ -2,6 +2,7 @@ package com.agricultural.orderservice.service.impl;
 
 import com.agricultural.orderservice.client.ProductClient;
 import com.agricultural.orderservice.client.UserClient;
+import com.agricultural.orderservice.client.dto.ProductDTO;
 import com.agricultural.orderservice.client.dto.UserDTO;
 import com.agricultural.orderservice.config.RabbitMQConfig;
 import com.agricultural.orderservice.dto.CreateOrderRequest;

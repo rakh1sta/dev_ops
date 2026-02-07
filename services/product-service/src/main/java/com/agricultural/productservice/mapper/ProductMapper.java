@@ -22,8 +22,8 @@ public interface ProductMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     Product toEntity(ProductDTO productDTO);
-    
-    @Mapping(source = "category.id", target = "categoryId")
-    @Mapping(source = "category.name", target = "categoryName")
+
+    @Mapping(source = "categoryId", target = "category.id")
+    @Mapping(source = "categoryName", target = "category.name")
     void updateEntityFromDto(ProductDTO productDTO, @MappingTarget Product product);
 }

@@ -37,7 +37,7 @@ public class NotificationStatus {
     @Column(name = "channel") // EMAIL, SMS, PUSH
     private String channel;
     
-    @Column(name = "retry_count", defaultValue = "0")
+    @Column(name = "retry_count")
     private Integer retryCount;
     
     @Column(name = "error_message", length = 1000)

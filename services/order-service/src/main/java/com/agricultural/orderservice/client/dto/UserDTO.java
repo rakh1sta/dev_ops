@@ -1,6 +1,5 @@
 package com.agricultural.orderservice.client.dto;
 
-import com.agricultural.orderservice.entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

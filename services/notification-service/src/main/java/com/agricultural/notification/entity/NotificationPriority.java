@@ -1,0 +1,5 @@
+package com.agricultural.notification.entity;
+
+public enum NotificationPriority {
+    LOW, MEDIUM, HIGH, URGENT
+}
