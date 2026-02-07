@@ -1,41 +1,33 @@
-# Multi-stage Dockerfile for API Gateway
 # Stage 1: Build stage
 FROM maven:3.9.6-eclipse-temurin-17 AS builder
-
 WORKDIR /app
 
-# Copy the parent pom.xml and the api-gateway pom.xml
+# 1. Root pom.xml ni nusxalash
 COPY pom.xml .
-COPY api-gateway/pom.xml ./api-gateway/pom.xml
 
-# Download dependencies
-RUN mvn dependency:go-offline -q
+# 2. BARCHA modullarning pom.xml fayllarini nusxalash (BU ASOSIY TUZATISH)
+# Maven loyiha strukturasini validatsiya qilishi uchun bular shart
+COPY api-gateway/pom.xml api-gateway/
+COPY discovery-server/pom.xml discovery-server/
+COPY services/users-service/pom.xml services/users-service/
+COPY services/product-service/pom.xml services/product-service/
+COPY services/order-service/pom.xml services/order-service/
+COPY services/notification-service/pom.xml services/notification-service/
+COPY services/statistics-service/pom.xml services/statistics-service/
 
-# Copy source code
+# 3. Dependency-larni keshga olish
+RUN mvn dependency:go-offline -B -q
+
+# 4. Faqat api-gateway kodini nusxalash
 COPY api-gateway/src ./api-gateway/src
 
-# Build the application
-RUN mvn clean package -pl api-gateway -DskipTests
+# 5. Build qilish (-am flagi parentni ham inobatga olish uchun)
+RUN mvn clean package -pl api-gateway -am -DskipTests
 
 # Stage 2: Runtime stage
 FROM eclipse-temurin:17-jre-alpine
-
-LABEL maintainer="Agricultural Digital Platform"
-
-# Install necessary utilities
-RUN apk add --no-cache curl
-
 WORKDIR /app
-
-# Copy the built JAR file from the builder stage
+RUN apk add --no-cache curl
 COPY --from=builder /app/api-gateway/target/api-gateway-*.jar app.jar
-
-# Expose port
 EXPOSE 8080
-
-# Health check using Spring Boot Actuator
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8080/actuator/health || exit 1
-
-# Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]

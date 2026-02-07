@@ -1,41 +1,44 @@
-# Multi-stage Dockerfile for Order Service
 # Stage 1: Build stage
 FROM maven:3.9.6-eclipse-temurin-17 AS builder
-
 WORKDIR /app
 
-# Copy the parent pom.xml and the order-service pom.xml
+# 1. Root pom.xml ni nusxalash
 COPY pom.xml .
-COPY services/order-service/pom.xml ./services/order-service/pom.xml
 
-# Download dependencies
-RUN mvn dependency:go-offline -q
+# 2. BARCHA modullarning pom.xml fayllarini nusxalash
+# Bu Maven loyiha ierarxiyasini (parent-child) validatsiya qilishi uchun shart
+COPY api-gateway/pom.xml api-gateway/
+COPY discovery-server/pom.xml discovery-server/
+COPY services/users-service/pom.xml services/users-service/
+COPY services/product-service/pom.xml services/product-service/
+COPY services/order-service/pom.xml services/order-service/
+COPY services/notification-service/pom.xml services/notification-service/
+COPY services/statistics-service/pom.xml services/statistics-service/
 
-# Copy source code
+# 3. Dependency-larni keshga olish (optimallashtirish)
+RUN mvn dependency:go-offline -B -q
+
+# 4. Faqat order-service kodini nusxalash
 COPY services/order-service/src ./services/order-service/src
 
-# Build the application
-RUN mvn clean package -pl services/order-service -DskipTests
+# 5. Build qilish (-am flagi bilan barcha bog'liqliklarni inobatga oladi)
+RUN mvn clean package -pl services/order-service -am -DskipTests
 
 # Stage 2: Runtime stage
 FROM eclipse-temurin:17-jre-alpine
-
-LABEL maintainer="Agricultural Digital Platform"
-
-# Install necessary utilities
-RUN apk add --no-cache curl
-
 WORKDIR /app
 
-# Copy the built JAR file from the builder stage
+# Zaruriy utilitalar
+RUN apk add --no-cache curl
+
+# JAR faylni builder bosqichidan nusxalash
 COPY --from=builder /app/services/order-service/target/order-service-*.jar app.jar
 
-# Expose port
+# Order service porti
 EXPOSE 8083
 
-# Health check using Spring Boot Actuator
+# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8083/actuator/health || exit 1
 
-# Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]

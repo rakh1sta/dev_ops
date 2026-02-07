@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # Discovery Server (Eureka)
   discovery-server:
-    image: YOUR_DOCKERHUB_USERNAME/discovery-server:latest
+    image: rakh1sta1313rakh1sta1313rakh1sta1313/discovery-server:latest
     container_name: discovery-server
     hostname: discovery-server
     ports:
@@ -36,7 +36,7 @@ services:
 
   # API Gateway
   api-gateway:
-    image: YOUR_DOCKERHUB_USERNAME/api-gateway:latest
+    image: rakh1sta1313/api-gateway:latest
     container_name: api-gateway
     hostname: api-gateway
     depends_on:
@@ -95,7 +95,7 @@ services:
 
   # Users Service
   users-service:
-    image: YOUR_DOCKERHUB_USERNAME/users-service:latest
+    image: rakh1sta1313/users-service:latest
     container_name: users-service
     hostname: users-service
     depends_on:
@@ -137,7 +137,7 @@ services:
 
   # Product Service
   product-service:
-    image: YOUR_DOCKERHUB_USERNAME/product-service:latest
+    image: rakh1sta1313/product-service:latest
     container_name: product-service
     hostname: product-service
     depends_on:
@@ -179,7 +179,7 @@ services:
 
   # Order Service
   order-service:
-    image: YOUR_DOCKERHUB_USERNAME/order-service:latest
+    image: rakh1sta1313/order-service:latest
     container_name: order-service
     hostname: order-service
     depends_on:
@@ -225,7 +225,7 @@ services:
 
   # Notification Service
   notification-service:
-    image: YOUR_DOCKERHUB_USERNAME/notification-service:latest
+    image: rakh1sta1313/notification-service:latest
     container_name: notification-service
     hostname: notification-service
     depends_on:
@@ -265,7 +265,7 @@ services:
 
   # Statistics Service
   statistics-service:
-    image: YOUR_DOCKERHUB_USERNAME/statistics-service:latest
+    image: rakh1sta1313/statistics-service:latest
     container_name: statistics-service
     hostname: statistics-service
     depends_on:

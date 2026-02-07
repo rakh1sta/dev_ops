@@ -1,41 +1,30 @@
-# Multi-stage Dockerfile for Notification Service
 # Stage 1: Build stage
 FROM maven:3.9.6-eclipse-temurin-17 AS builder
-
 WORKDIR /app
 
-# Copy the parent pom.xml and the notification-service pom.xml
 COPY pom.xml .
-COPY services/notification-service/pom.xml ./services/notification-service/pom.xml
 
-# Download dependencies
-RUN mvn dependency:go-offline -q
+# BARCHA modullar pom.xml (Maven xato bermasligi uchun shart)
+COPY api-gateway/pom.xml api-gateway/
+COPY discovery-server/pom.xml discovery-server/
+COPY services/users-service/pom.xml services/users-service/
+COPY services/product-service/pom.xml services/product-service/
+COPY services/order-service/pom.xml services/order-service/
+COPY services/notification-service/pom.xml services/notification-service/
+COPY services/statistics-service/pom.xml services/statistics-service/
 
-# Copy source code
+RUN mvn dependency:go-offline -B -q
+
+# Faqat notification-service kodini nusxalash
 COPY services/notification-service/src ./services/notification-service/src
 
-# Build the application
-RUN mvn clean package -pl services/notification-service -DskipTests
+# Build
+RUN mvn clean package -pl services/notification-service -am -DskipTests
 
 # Stage 2: Runtime stage
 FROM eclipse-temurin:17-jre-alpine
-
-LABEL maintainer="Agricultural Digital Platform"
-
-# Install necessary utilities
-RUN apk add --no-cache curl
-
 WORKDIR /app
-
-# Copy the built JAR file from the builder stage
+RUN apk add --no-cache curl
 COPY --from=builder /app/services/notification-service/target/notification-service-*.jar app.jar
-
-# Expose port
 EXPOSE 8084
-
-# Health check using Spring Boot Actuator
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8084/actuator/health || exit 1
-
-# Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
