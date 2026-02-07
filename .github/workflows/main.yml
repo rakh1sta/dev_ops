@@ -13,6 +13,12 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+      issues: write
+      statuses: write
     strategy:
       matrix:
         java-version: [17]
@@ -35,7 +41,10 @@ jobs:
 
       - name: Run tests
         run: |
-          mvn test -B -V
+            # Root pom.xml ni mahalliy repo-ga o'rnatish (mikroxizmatlar uni ko'rishi uchun)
+            mvn install -N 
+            # Endi testlarni ishga tushirish
+            mvn test -B -V
           
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
